@@ -49,8 +49,7 @@ def estimate_probability_of_change(request):
     results = daily_prices.find({'name': 'FB'})
     prices = [] 
     for result in results:
-        return str(result)
         prices.append(result["price"])
 
     # 2 % change in last 3 days
-    return calCulateLikelyHood(prices, 2, 3)
+    return str(calCulateLikelyHood(prices, 2, 3))
