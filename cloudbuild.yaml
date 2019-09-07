@@ -8,3 +8,6 @@ steps:
   args: ['-c', 'gcloud functions deploy estimate_probability_of_change --env-vars-file .env.yaml --runtime python37 --trigger-http --service-account trader@trading-systems-252219.iam.gserviceaccount.com']
   dir: 'trading-helper/cloud-functions/estimate_probability_of_change'
   entrypoint: '/bin/bash'
+- name: 'ubuntu'
+  args: ['-c', 'curl https://us-central1-trading-systems-252219.cloudfunctions.net/estimate_probability_of_change']
+  entrypoint: '/bin/bash'
