@@ -9,5 +9,6 @@ db_pass = kms_client.decrypt(
     base64.b64decode(os.environ["SECRET_STRING"]),
 ).plaintext
 
-def secret_hello(request):
+
+def estimate_probability_of_change(request):
     return db_pass[:1]
