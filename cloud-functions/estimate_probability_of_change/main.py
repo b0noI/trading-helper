@@ -4,7 +4,6 @@ import base64
 from google.cloud import kms
 from pymongo import MongoClient
 import urllib
-import numpy
 
 
 KMS_CLIENT = kms.KeyManagementServiceClient()
@@ -18,38 +17,35 @@ MONGO_CLIENT = MongoClient('mongodb+srv://trader:' +
 DB = MONGO_CLIENT['prices']
 
 
-
-def calculatePercentChage(oldval, newval):
+def calculate_percent_chage(oldval, newval):
     return (((newval - oldval) * 100.0)/oldval)
 
-"""
-   prices: list of prices for specific stock
-   percent: percent change user expect to happen
-   ws: Window size in term of days
-"""
-def calCulateLikelyHood(prices, percent, ws):
-    if len(prices) < ws: 
-       percentChange = calculatePercentChage(prices[0], prices[len(prices.size()-1)])
-       return percentchange >= percent
-    
-    up = 0 
-    down = 0 
-    for i in range(len(prices) - ws + 1): 
-        newPercentChange = calculatePercentChage(prices[i], prices[i+ws - 1]) 
-        if newPercentChange > percent:
-           up = up + 1 
-        else:
-           down = down + 1 
 
-    return (up*100.0)/(up+down)
+def calculate_likelyhood(prices, percent, ws):
+    """
+    prices: list of prices for specific stock
+    percent: percent change user expect to happen
+    ws: Window size in term of days
+    """
+    if len(prices) < ws:
+        percentChange = calculate_percent_chage(prices[0], prices[len(prices.size()-1)])
+        return percentChange >= percent
+
+    up = 0
+    down = 0
+    for i in range(len(prices) - ws + 1):
+        newPercentChange = calculate_percent_chage(prices[i], prices[i+ws - 1])
+        if newPercentChange > percent:
+            up = up + 1
+        else:
+            down = down + 1
+
+    return (up * 100.0)/(up + down)
 
 
 def estimate_probability_of_change(request):
     daily_prices = DB.daily
-    results = daily_prices.find({'name': 'FB'})
-    prices = [] 
-    for result in results:
-        prices.append(result["price"])
+    prices = [result["price"] for result in daily_prices.find({'name': 'FB'})]
 
     # 2 % change in last 3 days
-    return str(calCulateLikelyHood(prices, 2, 3))
+    return str(calculate_likelyhood(prices, 2, 3))
