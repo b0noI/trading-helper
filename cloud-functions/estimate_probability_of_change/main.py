@@ -5,6 +5,9 @@ from google.cloud import kms
 from pymongo import MongoClient
 import urllib
 
+REQUEST_KEY_NAME = "name"
+REQUEST_KEY_DURATION_IN_DAYS = "days"
+REQUEST_KEY_PERCENT_CHANGE = "percent_change"
 
 KMS_CLIENT = kms.KeyManagementServiceClient()
 db_pass = KMS_CLIENT.decrypt(
@@ -28,7 +31,8 @@ def calculate_likelyhood(prices, percent, ws):
     ws: Window size in term of days
     """
     if len(prices) < ws:
-        percentChange = calculate_percent_chage(prices[0], prices[len(prices.size()-1)])
+        percentChange = calculate_percent_chage(prices[0],
+                                                prices[len(prices.size() - 1)])
         return percentChange >= percent
 
     up = 0
@@ -44,8 +48,13 @@ def calculate_likelyhood(prices, percent, ws):
 
 
 def estimate_probability_of_change(request):
-    daily_prices = DB.daily
-    prices = [result["price"] for result in daily_prices.find({'name': 'FB'})]
+    request_json = request.get_json(silent=True)
+    request_json = request_json if request_json else dict()
+    name = request_json.get(REQUEST_KEY_NAME, "FB")
+    duration_in_days = request_json.get(REQUEST_KEY_DURATION_IN_DAYS, 2)
+    percent_change = request_json.get(REQUEST_KEY_PERCENT_CHANGE, 2)
 
-    # 2 % change in last 3 days
-    return str(calculate_likelyhood(prices, 2, 3))
+    daily_prices = DB.daily
+    prices = [result["price"] for result in daily_prices.find({"name": name})]
+
+    return str(calculate_likelyhood(prices, percent_change, duration_in_days))
