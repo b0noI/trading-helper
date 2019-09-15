@@ -30,22 +30,25 @@ def calculate_likelyhood(prices, percent, ws):
     percent: percent change user expect to happen
     ws: Window size in term of days
     """
+    if ws < 0:
+       print("Time windows can not be negative")
+       return 0
     if len(prices) < ws:
-        percentChange = calculate_percent_chage(prices[0],
-                                                prices[len(prices.size() - 1)])
-        return percentChange >= percent
+        print("There is not enough data to support window size %s", ws)
+        return 0
 
     up = 0
     down = 0
     for i in range(len(prices) - ws + 1):
         newPercentChange = calculate_percent_chage(prices[i], prices[i+ws - 1])
-        if newPercentChange > percent:
+        print(newPercentChange)
+        if newPercentChange >= percent:
             up = up + 1
         else:
             down = down + 1
-
-    return (up * 100.0)/(up + down)
-
+    # flip the operation if request is for negative number
+    ans=(up * 100.0)/(up + down) if percent > 0 else (down * 100.0)/(up + down)
+    return ans
 
 def estimate_probability_of_change(request):
     request_json = request.get_json(silent=True)
