@@ -66,7 +66,6 @@ def calculate_batch_likelyhood(prices, percent, ws):
               ", time window size",
               len(ws))
         return [0]
-
     result = []
     # TODO: Can we parallelize the below code
     for i in range(len(percent)):
@@ -107,9 +106,7 @@ def batch_estimate_probability_of_change(request):
                 "name": name})]
             # Store in the cache
             price_cache[name] = prices
-
         results.append(
             calculate_batch_likelyhood(prices, percent_change, days))
-
     assert(len(results) == len(requests))
     return str(results)
