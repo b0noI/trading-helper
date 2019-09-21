@@ -33,21 +33,26 @@ def calculate_likelyhood(prices, percent, ws):
     ws: Window size in term of days
     """
     if ws < 0:
-       raise ValueError("Time windows can not be negative")
+        raise ValueError("Time windows can not be negative")
     if len(prices) < ws:
         ValueError("There is not enough data to support window size %s", ws)
 
     up = 0
     down = 0
     for i in range(len(prices) - ws + 1):
-        newPercentChange = calculate_percent_chage(prices[i], prices[i + ws - 1])
+        newPercentChange = calculate_percent_chage(
+            prices[i], prices[i + ws - 1])
         if newPercentChange >= percent:
             up = up + 1
         else:
             down = down + 1
     # flip the operation if request is for negative number
-    ans=(up * 100.0)/(up + down) if percent > 0 else (down * 100.0)/(up + down)
+    if percent > 0:
+        ans = (up * 100.0) / (up + down)
+    else:
+        ans = (down * 100.0) / (up + down)
     return ans
+
 
 def calculate_batch_likelyhood(prices, percent, ws):
     """
@@ -56,14 +61,18 @@ def calculate_batch_likelyhood(prices, percent, ws):
     ws: List of window size in term of days
     """
     if len(percent) != len(ws):
-       print("Invalid input percent size", len(percent), ", time window size", len(ws))
-       return [0]
+        print("Invalid input percent size",
+              len(percent),
+              ", time window size",
+              len(ws))
+        return [0]
 
     result = []
     # TODO: Can we parallelize the below code
     for i in range(len(percent)):
         result.append(calculate_likelyhood(prices, percent[i], ws[i]))
     return result
+
 
 def estimate_probability_of_change(request):
     request_json = request.get_json(silent=True)
@@ -77,27 +86,30 @@ def estimate_probability_of_change(request):
 
     return str(calculate_likelyhood(prices, percent_change, duration_in_days))
 
+
 def batch_estimate_probability_of_change(request):
     request_json = request.get_json(silent=True)
     request_json = request_json if request_json else dict()
     requests = request_json.get(REQUESTS, [])
     price_cache = {}
     results = []
-    for i in range(len(requests):
+    for i in range(len(requests)):
         name = requests[i]["name"]
         days = requests[i]["days"]
         percent_change = requests[i]["percent_change"]
         prices = []
         # Get from cache if available
-        if name in price_cache.keys()
-           prices = price_cache[name]
-        else
-           daily_prices = DB.daily
-           prices = [result["price"] for result in daily_prices.find({"name": name})]
-           # Store in the cache
-           price_cache[name] = prices
+        if name in price_cache.keys():
+            prices = price_cache[name]
+        else:
+            daily_prices = DB.daily
+            prices = [result["price"] for result in daily_prices.find({
+                "name": name})]
+            # Store in the cache
+            price_cache[name] = prices
 
-        results.append(calculate_batch_likelyhood(prices, percent_change, days))
+        results.append(
+            calculate_batch_likelyhood(prices, percent_change, days))
 
-    assert(len(results)==len(requests))
+    assert(len(results) == len(requests))
     return str(results)
