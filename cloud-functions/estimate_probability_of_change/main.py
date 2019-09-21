@@ -23,7 +23,8 @@ DB = MONGO_CLIENT['prices']
 
 
 # Global variables
-price_cache = {}
+PRICE_CACHE = {}
+
 
 def calculate_percent_chage(oldval, newval):
     return (((newval - oldval) * 100.0)/oldval)
@@ -100,14 +101,14 @@ def batch_estimate_probability_of_change(request):
         percent_change = requests[i]["percent_change"]
         prices = []
         # Get from cache if available
-        if name in price_cache.keys():
-            prices = price_cache[name]
+        if name in PRICE_CACHE.keys():
+            prices = PRICE_CACHE[name]
         else:
             daily_prices = DB.daily
             prices = [result["price"] for result in daily_prices.find({
                 "name": name})]
             # Store in the cache
-            price_cache[name] = prices
+            PRICE_CACHE[name] = prices
         results.append(
             calculate_likelyhood(prices, percent_change, days))
     assert(len(results) == len(requests))
