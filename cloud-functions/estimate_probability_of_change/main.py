@@ -22,6 +22,10 @@ MONGO_CLIENT = MongoClient('mongodb+srv://trader:' +
 DB = MONGO_CLIENT['prices']
 
 
+# Global variables
+PRICE_CACHE = {}
+
+
 def calculate_percent_chage(oldval, newval):
     return (((newval - oldval) * 100.0)/oldval)
 
@@ -90,7 +94,6 @@ def batch_estimate_probability_of_change(request):
     request_json = request.get_json(silent=True)
     request_json = request_json if request_json else dict()
     requests = request_json.get(REQUESTS, [])
-    price_cache = {}
     results = []
     for i in range(len(requests)):
         name = requests[i]["name"]
@@ -98,15 +101,16 @@ def batch_estimate_probability_of_change(request):
         percent_change = requests[i]["percent_change"]
         prices = []
         # Get from cache if available
-        if name in price_cache.keys():
-            prices = price_cache[name]
+        if name in PRICE_CACHE.keys():
+            prices = PRICE_CACHE[name]
         else:
             daily_prices = DB.daily
             prices = [result["price"] for result in daily_prices.find({
                 "name": name})]
             # Store in the cache
-            price_cache[name] = prices
+            PRICE_CACHE[name] = prices
         results.append(
-            calculate_batch_likelyhood(prices, percent_change, days))
+            calculate_likelyhood(prices, percent_change, days))
     assert(len(results) == len(requests))
     return str(results)
+
