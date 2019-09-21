@@ -107,6 +107,7 @@ def batch_estimate_probability_of_change(request):
             # Store in the cache
             price_cache[name] = prices
         results.append(
-            calculate_batch_likelyhood(prices, percent_change, days))
+            calculate_likelyhood(prices, percent_change, days))
     assert(len(results) == len(requests))
     return str(results)
+
