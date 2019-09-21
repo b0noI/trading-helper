@@ -5,7 +5,7 @@ steps:
   args: ['checkout', '$COMMIT_SHA']
   dir: 'trading-helper'
 - name: 'google/cloud-sdk:237.0.0'
-  args: ['-c', 'pip3 install requirements.txt && python3 main_test.py']
+  args: ['-c', 'pip install requirements.txt && python main_test.py']
   dir: 'trading-helper/cloud-functions/estimate_probability_of_change'
   entrypoint: '/bin/bash'
 - name: 'google/cloud-sdk:237.0.0'
