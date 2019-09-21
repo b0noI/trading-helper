@@ -113,4 +113,3 @@ def batch_estimate_probability_of_change(request):
             calculate_likelyhood(prices, percent_change, days))
     assert(len(results) == len(requests))
     return str(results)
-
