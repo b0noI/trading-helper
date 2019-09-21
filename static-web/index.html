@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Bootstrap Example</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+</head>
+<body>
+
+<div class="jumbotron text-center">
+  <h1> Trading Helper </h1>
+  <p> Write something here to explain! </p> 
+</div>
+  
+<div class="container">
+  <div class="row">
+    <div class="col-sm-12">
+      <h3> Company </h3>
+      
+      <div class="form-check">
+        <label class="form-check-label">
+          <input type="radio" class="form-check-input" name="optradio" checked> Facebook
+        </label>
+      </div>
+
+      <div class="form-check">
+        <label class="form-check-label">
+          <input type="radio" class="form-check-input" name="optradio" disabled> More to come
+        </label>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="form-group">
+        <label for="days"> DAYS: </label>
+        <input type="number" class="form-control" id="days" value="5">
+      </div>
+    </div>
+  </div>
+
+    <div class="row">
+    <div class="col-sm-12">
+      <div class="form-group">
+        <label for="change"> % CHANGE: </label>
+        <input type="number" class="form-control" id="change" value="35" min="0" max="100" step="5">
+      </div>
+    </div>
+  </div>
+
+  <input class="btn btn-primary" type="button" value="Calculation" onclick="msg()">
+
+</div>
+
+<script>
+function msg() {
+
+  const Url = 'https://us-central1-trading-systems-252219.cloudfunctions.net/estimate_probability_of_change'
+// arc
+  var x = document.getElementById("days").value;
+  var y = document.getElementById("change").value;
+  
+  const data = {
+    "name": "FB",
+    "days": x,
+    "percent_change": y
+  }
+
+   $.post(Url, data, function(data, status){
+      alert("Hello world!465r6oigif857f768gbunictybiu");
+    });
+
+  alert("Hello world!");
+}
+</script>
+
+</body>
+</html>
