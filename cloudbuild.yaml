@@ -5,13 +5,6 @@ steps:
   args: ['checkout', '$COMMIT_SHA']
   id: 'checkout'
   dir: 'trading-helper'
-# - name: 'python:3'
-#   args: ['-c', 'pip install -r requirements.txt && python main_test.py']
-#   dir: 'trading-helper/cloud-functions/estimate_probability_of_change'
-#   entrypoint: '/bin/bash'
-#   env:
-#   - 'SECRET_RESOURCE_NAME=projects/trading-systems-252219/locations/global/keyRings/db/cryptoKeys/trader'
-#   - 'SECRET_STRING=CiQAoBPIQtlOkNMYYPz0MQXdbZj1av2kGlz3mKLHKfANM89drUASOACy9ktAS71w2dRp7OlrRG+bF1I31uZL5RkwAfFPZ/urJrSGDILvOk5Kv50PLmxLAoEat0UwUbaf'
 - name: 'google/cloud-sdk:237.0.0'
   args: ['-c', 'gcloud functions deploy estimate_probability_of_change_test --entry-point estimate_probability_of_change --env-vars-file .env.yaml --runtime python37 --trigger-http --service-account trader@trading-systems-252219.iam.gserviceaccount.com']
   dir: 'trading-helper/cloud-functions/estimate_probability_of_change'
@@ -32,7 +25,7 @@ steps:
   entrypoint: '/bin/bash'
 - name: 'google/cloud-sdk:237.0.0'
   id: 'deploy-trader-function'
-  waitFor: 'checkout'
+  waitFor: ['checkout']
   args: ['-c', 'gcloud functions deploy batch_estimate_probability_of_change --env-vars-file .env.yaml --runtime python37 --trigger-http --service-account trader@trading-systems-252219.iam.gserviceaccount.com']
   dir: 'trading-helper/cloud-functions/trader'
   entrypoint: '/bin/bash'
