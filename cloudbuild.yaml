@@ -26,6 +26,6 @@ steps:
 - name: 'google/cloud-sdk:237.0.0'
   id: 'deploy-trader-function'
   waitFor: ['checkout']
-  args: ['-c', 'gcloud functions deploy batch_estimate_probability_of_change --env-vars-file .env.yaml --runtime python37 --trigger-http --service-account trader@trading-systems-252219.iam.gserviceaccount.com']
+  args: ['-c', 'gcloud functions deploy trade --runtime python37 --trigger-topic trade-signals --service-account trader@trading-systems-252219.iam.gserviceaccount.com']
   dir: 'trading-helper/cloud-functions/trader'
   entrypoint: '/bin/bash'
