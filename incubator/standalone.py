@@ -15,7 +15,8 @@ db = client.prices
 for d in db.daily.find():
     DATA.append(d)
 
-#print(DATA[:3])
+print(DATA[:3])
+print(DATA[0]["price"])
 
 COMFORTABLE_PRICE_TO_BUY = .2
 EXPECTED_MIN_PROFIT_LEVEL = 1.1
@@ -155,8 +156,10 @@ def main():
     trading_strategy = BasicTradingStrategy(500)
     for i in range(len(DATA)):
         date = datetime.today() - timedelta(days=len(DATA) - i)
+        # price is just one price for that day
         price = DATA[i]["price"]
         option_price = ((0.2 * random.random()) + 0.1) * price
+        # Target price, target date, original price
         new_option = Option(price * 1.1, date + timedelta(days=300), option_price)
         trading_strategy.new_day(date, price, [(option_price, new_option)])
         if i % 20 == 0:
