@@ -15,9 +15,13 @@ db = client.prices
 for d in db.daily.find():
     DATA.append(d)
 
-print(DATA[:3])
-print(DATA[0]["price"])
+print("First %d rows of data\n" % (min(3, len(DATA))))
+for i in range(min(3, len(DATA))):
+         print(DATA[i])
 
+DATA = DATA[len(DATA) - 1 ]
+
+# TODO add comment about each variables
 COMFORTABLE_PRICE_TO_BUY = .2
 EXPECTED_MIN_PROFIT_LEVEL = 1.1
 DAYS_TIME_HORIZON = 300
@@ -34,9 +38,6 @@ PERCENT_CHANGE_FIELD_NAME = "percent_change"
 
 DEBUG = False
 
-from datetime import datetime, timedelta
-import requests
-import random
 
 class Option(object):
     
@@ -153,16 +154,16 @@ class BasicTradingStrategy(object):
 
                     
 def main():
+    # Specify the budget 
     trading_strategy = BasicTradingStrategy(500)
-    for i in range(len(DATA)):
-        date = datetime.today() - timedelta(days=len(DATA) - i)
-        # price is just one price for that day
-        price = DATA[i]["price"]
-        option_price = ((0.2 * random.random()) + 0.1) * price
-        # Target price, target date, original price
-        new_option = Option(price * 1.1, date + timedelta(days=300), option_price)
-        trading_strategy.new_day(date, price, [(option_price, new_option)])
-        if i % 20 == 0:
-            print("#### {} DAY ENDS ####, money: {}".format(i, trading_strategy.budget + trading_strategy.calculate_portfolio_price(price)))
+    date = datetime.today()
+    # price is just one price for that day
+    price = DATA["price"]
+    # TODO: Currently we are generating random option price, but plug in here real option data 
+    option_price = ((0.2 * random.random()) + 0.1) * price
+    # Target price, target date (a future date), original option price
+    new_option = Option(price * 1.1, date + timedelta(days=300), option_price)
+    trading_strategy.new_day(date, price, [(option_price, new_option)])
+    print("#### {} DAY ENDS ####, money: {}".format(0, trading_strategy.budget + trading_strategy.calculate_portfolio_price(price)))
 
 main()

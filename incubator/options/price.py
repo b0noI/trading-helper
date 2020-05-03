@@ -20,20 +20,28 @@ opt = []
 # So I am finding nearest day in future when price for option exist.
 # opt[0] is CALL of type DATA Frame
 # opt[1] is PUT of type  DATA Frame
+i = 0
 while True: 
   print("Trying for " + str(Today))
   try:
     opt = ticker.option_chain(Today.strftime('%Y-%m-%d'))
-    break
+    print(opt)
+    i = i + 1
+    if i == 3:
+    	break
   except ValueError:
     # Find a day in future where prices exist 
     Today = Today + timedelta(days=1)
 
-print(Today)
-#print(opt)
+exit()
+print(opt)
 
 call = opt[0]
+print("********** CALL ************")
+print(call)
 put = opt[1]
+print("********** PUT *************")
+print(put)
 # There is possibility that there is no price available for given DATE.
 # This program will find the next immediate available option price for PUT and print it.
 final_date = FUTURE_DATE
