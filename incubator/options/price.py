@@ -6,9 +6,9 @@ import sys
 from datetime import date, timedelta
 
 
-TICKER = "MSFT"
+TICKER = "FB"
 DATE =  str(date.today())
-FUTURE_DATE = "9999-12-31"
+FUTURE_DATE = "2020-12-31"
 
 Today = datetime.datetime(int(DATE[:4]), int(DATE[5:7]), int(DATE[8:]))
 Future_date = datetime.datetime(int(FUTURE_DATE[:4]), int(FUTURE_DATE[5:7]), int(FUTURE_DATE[8:]))

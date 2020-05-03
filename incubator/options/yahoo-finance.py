@@ -61,6 +61,6 @@ print("show options expirations")
 print(msft.options)
 
 print(" get option chain for specific expiration")
-opt = msft.option_chain('2020-01-30')
+opt = msft.option_chain('2020-05-28')
 print(opt)
 # data available via: opt.calls, opt.puts
