@@ -1,26 +1,18 @@
-import os
-import base64
-
-from google.cloud import kms
 from pymongo import MongoClient
-import urllib
+from google.cloud import secretmanager
 
 REQUEST_KEY_NAME = "name"
 REQUEST_KEY_DURATION_IN_DAYS = "days"
 REQUEST_KEY_PERCENT_CHANGE = "percent_change"
 REQUESTS = "requests"
 
+secrets_client = secretmanager.SecretManagerServiceClient()
+secrets_name = secrets_client.secret_version_path("162543004095", "mongodb-pswd", "1")
+secret_response = secrets_client.access_secret_version(secrets_name)
+mongo_psw = secret_response.payload.data.decode('UTF-8')
 
-KMS_CLIENT = kms.KeyManagementServiceClient()
-db_pass = KMS_CLIENT.decrypt(
-    os.environ["SECRET_RESOURCE_NAME"],
-    base64.b64decode(os.environ["SECRET_STRING"]),
-).plaintext
-MONGO_CLIENT = MongoClient('mongodb+srv://trader:' +
-                           urllib.parse.quote_plus(db_pass) +
-                           '@ahmed-3jokf.gcp.mongodb.net/test')
+MONGO_CLIENT = MongoClient('mongodb+srv://trader:{}@ahmed-3jokf.gcp.mongodb.net/test'.format(mongo_psw))
 DB = MONGO_CLIENT['prices']
-
 
 # Global variables
 PRICE_CACHE = {}
