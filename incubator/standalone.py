@@ -7,7 +7,7 @@ from IPython.display import clear_output
 from pymongo import MongoClient
 
 
-client = MongoClient("mongodb+srv://trader:3o]s2>3~v#zV8Eq@ahmed-3jokf.gcp.mongodb.net/test?retryWrites=true&w=majority")
+client = MongoClient("mongodb+srv://trader:{}@ahmed-3jokf.gcp.mongodb.net/test?retryWrites=true&w=majority")
 
 DATA = []
 

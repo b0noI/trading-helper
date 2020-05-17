@@ -1,13 +1,16 @@
 import requests
-import numpy as np
-import matplotlib.pyplot as plt 
 import random
 from datetime import datetime, timedelta
-from IPython.display import clear_output
 from pymongo import MongoClient
+from google.cloud import secretmanager
 
+secrets_client = secretmanager.SecretManagerServiceClient()
+secrets_name = secrets_client.secret_version_path("trading-systems-252219", "mongodb-pswd", "1")
+secret_response = secrets_client.access_secret_version(secrets_name)
+mongo_psw = secret_response.payload.data.decode('UTF-8')
 
-client = MongoClient("mongodb+srv://trader:3o]s2>3~v#zV8Eq@ahmed-3jokf.gcp.mongodb.net/test?retryWrites=true&w=majority")
+client = MongoClient("mongodb+srv://trader:{}@ahmed-3jokf.gcp.mongodb.net/test?retryWrites=true&w=majority".format(
+    mongo_psw))
 
 DATA = []
 
