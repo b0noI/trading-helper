@@ -5,7 +5,7 @@ from pymongo import MongoClient
 from google.cloud import secretmanager
 
 secrets_client = secretmanager.SecretManagerServiceClient()
-secrets_name = secrets_client.secret_version_path("trading-systems-252219", "mongodb-pswd", "1")
+secrets_name = secrets_client.secret_version_path("162543004095", "mongodb-pswd", "1")
 secret_response = secrets_client.access_secret_version(secrets_name)
 mongo_psw = secret_response.payload.data.decode('UTF-8')
 
