@@ -38,4 +38,6 @@ print("Dates that exist for the ticket and your time horizon: {}".format(str(dat
 
 for experation_date in dates:
     call_fb_options, _ = fb.option_chain(EXPIRATION_DATE)
-    print(call_fb_options)
+    # print(call_fb_options)
+    for option in call_fb_options.iterrows():
+        print(option)

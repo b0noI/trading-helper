@@ -1,8 +1,9 @@
 import requests
 import random
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from pymongo import MongoClient
 from google.cloud import secretmanager
+import yfinance as yf
 
 secrets_client = secretmanager.SecretManagerServiceClient()
 secrets_name = secrets_client.secret_version_path("162543004095", "mongodb-pswd", "1")
@@ -27,7 +28,8 @@ DATA = DATA[len(DATA) - 1 ]
 # TODO add comment about each variables
 COMFORTABLE_PRICE_TO_BUY = .2
 EXPECTED_MIN_PROFIT_LEVEL = 1.1 
-DAYS_TIME_HORIZON = 300 
+DAYS_TIME_HORIZON = 365
+PRECISION_FOR_TIME_HORIZON = 50  # ok to buy within +/- of this time horizon
 LIKELIHOOD_THRESHOLD_TO_SELL = 0.6 
 PERCENT_DEFINETLY_SELL = 120.
 
@@ -162,14 +164,36 @@ def main():
     date = datetime.today()
     # price is just one price for that day
     price = DATA["price"]
-    # TODO: Currently we are generating random option price, but plug in here real option data 
-    option_price = ((0.2 * random.random()) + 0.1) * price
-    # Target price, target date (a future date), original option price
-    new_option = Option(price * 1.1, date + timedelta(days=300), option_price)
-    trading_strategy.new_day(date, price, [(option_price, new_option)])
+    
+    options = get_options()
+    trading_strategy.new_day(date, price, options)
     print("#### {} DAY ENDS ####, money: {}".format(0, trading_strategy.budget + trading_strategy.calculate_portfolio_price(price)))
 
 def trade(context, input_obj):
     main()
     print(":)!")
     return ":)!"
+
+def get_options():
+    today = date.today()
+    min_date = today + timedelta(days=TIME_HORIZON_IN_DAYS - PRECISION_FOR_TIME_HORIZON)
+    max_date = today + timedelta(days=TIME_HORIZON_IN_DAYS + PRECISION_FOR_TIME_HORIZON)
+
+    dates = []
+
+    for opt in fb.options:
+        option_date = datetime.strptime(opt, "%Y-%m-%d").date()
+        if option_date >= min_date and option_date <= max_date:
+            dates.append(option_date)
+
+    print("Dates that exist for the ticket and your time horizon: {}".format(str(dates)))
+    options = []
+
+    for experation_date in dates:
+        call_fb_options, _ = fb.option_chain(EXPIRATION_DATE)
+        print(call_fb_options)
+        for option in call_fb_options.iterrows():
+            print(option)
+            option_price = option["lastPrice"]
+            options.append((option_price, Option(option["strike"], experation_date, option_price)))
+    return options
