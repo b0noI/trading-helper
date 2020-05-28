@@ -174,7 +174,10 @@ def trade(context, input_obj):
     print(":)!")
     return ":)!"
 
+TICKER = "FB"
+
 def get_options():
+    fb = yf.Ticker(TICKER)
     today = date.today()
     min_date = today + timedelta(days=TIME_HORIZON_IN_DAYS - PRECISION_FOR_TIME_HORIZON)
     max_date = today + timedelta(days=TIME_HORIZON_IN_DAYS + PRECISION_FOR_TIME_HORIZON)
