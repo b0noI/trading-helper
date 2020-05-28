@@ -28,7 +28,7 @@ DATA = DATA[len(DATA) - 1 ]
 # TODO add comment about each variables
 COMFORTABLE_PRICE_TO_BUY = .2
 EXPECTED_MIN_PROFIT_LEVEL = 1.1 
-DAYS_TIME_HORIZON = 365
+TIME_HORIZON_IN_DAYS = 365
 PRECISION_FOR_TIME_HORIZON = 50  # ok to buy within +/- of this time horizon
 LIKELIHOOD_THRESHOLD_TO_SELL = 0.6 
 PERCENT_DEFINETLY_SELL = 120.
@@ -68,7 +68,7 @@ class BasicTradingStrategy(object):
     
     def _buy(self, date, option_price, target_price):
         self.budget -= option_price
-        option = Option(target_price, date + timedelta(days=DAYS_TIME_HORIZON), option_price)
+        option = Option(target_price, date + timedelta(days=TIME_HORIZON_IN_DAYS), option_price)
         self.portfolio.append(option)
         if DEBUG:
             print("buy: {}".format(option))
@@ -88,7 +88,7 @@ class BasicTradingStrategy(object):
         break_even_price = option_price + option_target_price
         expected_profit_price = EXPECTED_MIN_PROFIT_LEVEL * break_even_price
         price_percent_delta = (expected_profit_price / current_price) * 100 - 100 
-        probability = self._probability(DAYS_TIME_HORIZON, price_percent_delta)
+        probability = self._probability(TIME_HORIZON_IN_DAYS, price_percent_delta)
         if probability > LIKELIHOOD_THRESHOLD_TO_SELL:
             if self.budget > option_price:
                 self._buy(date, option_price, option_target_price)
