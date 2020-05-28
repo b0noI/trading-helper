@@ -8,21 +8,23 @@ from pymongo import MongoClient
 from bson import ObjectId
 
 
-client = MongoClient("mongodb+srv://trader:{}@ahmed-3jokf.gcp.mongodb.net/test?retryWrites=true&w=majority")
+client = MongoClient("mongodb+srv://trader:my-password@ahmed-3jokf.gcp.mongodb.net/test?retryWrites=true&w=majority")
 
 # DB related operation 
 # TODO add them into a class
-DATA = []
 
-db = client.portfolio
+## Portfolio DB
+PORTFOLIO = []
+
+portfolio_db = client.portfolio
 # For a given portfolio (lastportfolio) there should be only one entry.
-for d in db.lastportfolio.find():
-    DATA.append(d)
+for d in portfolio_db.lastportfolio.find():
+    PORTFOLIO.append(d)
 
-DATA = DATA[len(DATA) - 1 ]
+PORTFOLIO = PORTFOLIO[len(PORTFOLIO) - 1 ]
 # Delete the row from DB 
 def delete_row(collection_id):
-   db.lastportfolio.delete_one({'_id': ObjectId(collection_id)})
+   portfolio_db.lastportfolio.delete_one({'_id': ObjectId(collection_id)})
 
 # Insert new row to DB
 def insert_new_price(history_price, current_price):
@@ -30,8 +32,18 @@ def insert_new_price(history_price, current_price):
       print("Database needs to have a initial portfolio value")
       exit(-1)
    history_price.append({ datetime.today().strftime('%Y-%m-%d-%H:%M:%S') : current_price})
-   db.lastportfolio.insert_one({'history_price':history_price, 'current_price': current_price})
+   portfolio_db.lastportfolio.insert_one({'history_price':history_price, 'current_price': current_price})
     
+
+## Stock price DB
+STOCK = []
+
+price_db = client.prices
+for d in price_db.daily.find():
+    STOCK.append(d)
+
+STOCK = STOCK[len(STOCK) - 1 ] 
+
 # TODO add comment about each variables
 COMFORTABLE_PRICE_TO_BUY = .2
 EXPECTED_MIN_PROFIT_LEVEL = 1.1
@@ -164,21 +176,23 @@ class BasicTradingStrategy(object):
 
                     
 def main():
-    # price is just one price for that day
-    price = DATA["current_price"]
-    print("Performing trading with current price {}".format(price))
+    # Get the budget from DB
+    budget = PORTFOLIO["current_price"]
+    print("Performing trading with budget {}".format(budget))
     # Specify the budget 
-    trading_strategy = BasicTradingStrategy(price)
+    trading_strategy = BasicTradingStrategy(budget)
     date = datetime.today()
+    # Price is just one price for that day of stock
+    price = STOCK["price"]
     # TODO: Currently we are generating random option price, but plug in here real option data 
     option_price = ((0.2 * random.random()) + 0.1) * price
     # Target price, target date (a future date), original option price
     new_option = Option(price * 1.1, date + timedelta(days=300), option_price)
     trading_strategy.new_day(date, price, [(option_price, new_option)])
-    print("#### {} DAY ENDS ####, money: {}".format(0, trading_strategy.budget + trading_strategy.calculate_portfolio_price(price)))
-    # Update DB with new price
-    insert_new_price(DATA['history_price'], trading_strategy.budget + trading_strategy.calculate_portfolio_price(price))
-    # Delete the old price 
-    delete_row(DATA['_id'])
+    print("new budget: {}".format(trading_strategy.budget + trading_strategy.calculate_portfolio_price(price)))
+    # Update DB with new budget and trading history
+    insert_new_price(PORTFOLIO['history_price'], trading_strategy.budget + trading_strategy.calculate_portfolio_price(price))
+    # Delete the old old budget  
+    delete_row(PORTFOLIO['_id'])
 
 main()
