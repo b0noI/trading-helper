@@ -1,6 +1,17 @@
 from datetime import timedelta, date, datetime
 
 import yfinance as yf
+from yahoo_fin import stock_info as si
+
+
+TICKER = "FB"
+EXPIRATION_DATE = "2020-12-17"
+STRIKE_PRICE = 230.0
+
+fb = yf.Ticker(TICKER)
+print(type(si.get_live_price(TICKER)))
+
+# CASE 0: price
 
 # CASE 1: for estimating price of an option that you have already
 # Let's assume I have in my portfolio FB option that:
@@ -8,11 +19,6 @@ import yfinance as yf
 # * has strike value 230
 # and I want to check how much this option costs today to determine if I need to sell or not
 
-TICKER = "FB"
-EXPIRATION_DATE = "2020-12-17"
-STRIKE_PRICE = 230.0
-
-fb = yf.Ticker(TICKER)
 call_fb_options, _ = fb.option_chain(EXPIRATION_DATE)
 call_fb_option = call_fb_options[call_fb_options["strike"] == STRIKE_PRICE]
 price = call_fb_option["lastPrice"].values[0]

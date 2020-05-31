@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, date
 from pymongo import MongoClient
 from google.cloud import secretmanager
 import yfinance as yf
+from yahoo_fin import stock_info as si
 
 secrets_client = secretmanager.SecretManagerServiceClient()
 secrets_name = secrets_client.secret_version_path("162543004095", "mongodb-pswd", "1")
@@ -133,7 +134,8 @@ class BasicTradingStrategy(object):
      
     def _maybe_sell(self, current_price):
         today = datetime.now()
-        for option in self.portfolio:
+        for i in range(len(self.portfolio)):
+            option = self.portfolio[i]
             delta = option.target_date - today
             days_delta = delta.days
             break_even_price = option.original_price + option.target_price
@@ -148,7 +150,7 @@ class BasicTradingStrategy(object):
             elif days_delta <= 1:
                 if DEBUG:
                     print("Selling since expired")
-                self._sell_option(i)
+                self._sell(i)
                 if i > 0:
                     i -= 1
             ##  
@@ -184,12 +186,8 @@ def main():
     trading_strategy = BasicTradingStrategy(budget)
     date = datetime.today()
     # Price is just one price for that day of stock
-    price = STOCK["price"]
-    # TODO: Currently we are generating random option price, but plug in here real option data 
-    option_price = ((0.2 * random.random()) + 0.1) * price
-    # Target price, target date (a future date), original option price
-    new_option = Option(price * 1.1, date + timedelta(days=300), option_price)
-    trading_strategy.new_day(date, price, [(option_price, new_option)])
+    price = si.get_live_price(FACEBOOK_TICKER_NAME)
+    trading_strategy.new_day(date, price, get_options())
     print("new budget: {}".format(trading_strategy.budget + trading_strategy.calculate_portfolio_price(price)))
     # Update DB with new budget and trading history
     insert_new_price(PORTFOLIO['history_price'], trading_strategy.budget + trading_strategy.calculate_portfolio_price(price))
@@ -220,7 +218,7 @@ def get_options():
     options = []
 
     for experation_date in dates:
-        call_fb_options, _ = fb.option_chain(EXPIRATION_DATE)
+        call_fb_options, _ = fb.option_chain(experation_date)
         print(call_fb_options)
         for option in call_fb_options.iterrows():
             print(option)
