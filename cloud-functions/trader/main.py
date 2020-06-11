@@ -2,6 +2,7 @@ import requests
 import random
 from datetime import datetime, timedelta, date
 from pymongo import MongoClient
+from bson import ObjectId
 from google.cloud import secretmanager
 import yfinance as yf
 from yahoo_fin import stock_info as si
@@ -21,7 +22,8 @@ portfolio_db = client.portfolio
 for d in portfolio_db.lastportfolio.find():
     PORTFOLIO.append(d)
 
-PORTFOLIO = PORTFOLIO[len(PORTFOLIO) - 1 ]
+PORTFOLIO = PORTFOLIO[len(PORTFOLIO) - 1]
+
 # Delete the row from DB 
 def delete_row(collection_id):
    portfolio_db.lastportfolio.delete_one({'_id': ObjectId(collection_id)})
@@ -177,9 +179,10 @@ class BasicTradingStrategy(object):
                 if i > 0:
                     i -= 1
 
-     
+
 def main():
     # Get the budget from DB
+    print("function initiated")
     budget = PORTFOLIO["current_price"]
     print("Performing trading with budget {}".format(budget))
     # Specify the budget 
@@ -194,12 +197,13 @@ def main():
     # Delete the old old budget  
     delete_row(PORTFOLIO['_id'])
 
+
 def trade(context, input_obj):
     main()
-    print(":)!")
-    return ":)!"
+
 
 TICKER = "FB"
+
 
 def get_options():
     fb = yf.Ticker(TICKER)
@@ -218,10 +222,21 @@ def get_options():
     options = []
 
     for experation_date in dates:
-        call_fb_options, _ = fb.option_chain(experation_date)
+        call_fb_options, _ = fb.option_chain(str(experation_date))
         print(call_fb_options)
         for option in call_fb_options.iterrows():
-            print(option)
+            _, option = option
+            # print("********")
+            # print(option)
+            # print(type(option))
+            # for i in option:
+            #     print("******** ########")
+            #     print(i)
+            #     print(type(i))
             option_price = option["lastPrice"]
             options.append((option_price, Option(option["strike"], experation_date, option_price)))
     return options
+
+
+if "__main__" == __name__:
+    main()
