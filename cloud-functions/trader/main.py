@@ -1,5 +1,6 @@
 import requests
 import random
+import constants
 from datetime import datetime, timedelta, date
 from pymongo import MongoClient
 from bson import ObjectId
@@ -14,19 +15,34 @@ mongo_psw = secret_response.payload.data.decode('UTF-8')
 
 client = MongoClient("mongodb+srv://trader:{}@ahmed-3jokf.gcp.mongodb.net/test?retryWrites=true&w=majority".format(mongo_psw))
 
-## Portfolio DB
-PORTFOLIO = []
+portfolios_collection = client.portfolio.portfolios
 
-portfolio_db = client.portfolio
-# For a given portfolio (lastportfolio) there should be only one entry.
-for d in portfolio_db.lastportfolio.find():
-    PORTFOLIO.append(d)
 
-PORTFOLIO = PORTFOLIO[len(PORTFOLIO) - 1]
+def initiate_portfolio():
+    portfolio_count = portfolios_collection.find({"name": constants.PORTFOLIO_NAME}).count()
+    if portfolio_count == 1:
+        return
+    elif portfolio_count > 1:
+        raise ValueError("there are more than one portfolio with this name")
 
-# Delete the row from DB 
-def delete_row(collection_id):
-   portfolio_db.lastportfolio.delete_one({'_id': ObjectId(collection_id)})
+    portfolios_collection.insert_one({"name": constants.PORTFOLIO_NAME, constants.CURRENT_BUDGET_FIELD_NAME: 5000})
+
+
+def get_current_portfolio_price():
+    return portfolios_collection.find_one({"name": constants.PORTFOLIO_NAME})[constants.CURRENT_BUDGET_FIELD_NAME]
+
+
+def set_current_portfolio_price(price):
+    portfolios_collection.update_one({
+        "name": constants.PORTFOLIO_NAME
+    }, {
+        "$set": {
+            constants.CURRENT_BUDGET_FIELD_NAME: price
+        }
+    })
+
+
+initiate_portfolio()
 
 # Insert new row to DB
 def insert_new_price(history_price, current_price):
@@ -77,8 +93,7 @@ class Option(object):
 
 class BasicTradingStrategy(object):
     
-    def __init__(self, budget):
-        self.budget = budget
+    def __init__(self):
         self.portfolio = []
      
     def new_day(self, date, price, avilable_options):
@@ -88,7 +103,7 @@ class BasicTradingStrategy(object):
      
     
     def _buy(self, date, option_price, target_price):
-        self.budget -= option_price
+        set_current_portfolio_price(get_current_portfolio_price() - option_price)
         option = Option(target_price, date + timedelta(days=TIME_HORIZON_IN_DAYS), option_price)
         self.portfolio.append(option)
         if DEBUG:
@@ -111,14 +126,14 @@ class BasicTradingStrategy(object):
         price_percent_delta = (expected_profit_price / current_price) * 100 - 100 
         probability = self._probability(TIME_HORIZON_IN_DAYS, price_percent_delta)
         if probability > LIKELIHOOD_THRESHOLD_TO_SELL:
-            if self.budget > option_price:
+            if get_current_portfolio_price() > option_price:
                 self._buy(date, option_price, option_target_price)
      
     def _sell(self, i, price):
         option = self.portfolio[i]
         # TODO
         current_option_price = self._calculate_option_price(option, price)
-        self.budget += current_option_price
+        set_current_portfolio_price(get_current_portfolio_price() + current_option_price)
         del self.portfolio[i]
      
     def _calculate_option_price(self, option, price):
@@ -183,19 +198,13 @@ class BasicTradingStrategy(object):
 def main():
     # Get the budget from DB
     print("function initiated")
-    budget = PORTFOLIO["current_price"]
-    print("Performing trading with budget {}".format(budget))
     # Specify the budget 
-    trading_strategy = BasicTradingStrategy(budget)
+    trading_strategy = BasicTradingStrategy()
     date = datetime.today()
     # Price is just one price for that day of stock
     price = si.get_live_price(FACEBOOK_TICKER_NAME)
     trading_strategy.new_day(date, price, get_options())
     print("new budget: {}".format(trading_strategy.budget + trading_strategy.calculate_portfolio_price(price)))
-    # Update DB with new budget and trading history
-    insert_new_price(PORTFOLIO['history_price'], trading_strategy.budget + trading_strategy.calculate_portfolio_price(price))
-    # Delete the old old budget  
-    delete_row(PORTFOLIO['_id'])
 
 
 def trade(context, input_obj):
