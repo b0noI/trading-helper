@@ -78,7 +78,7 @@ FACEBOOK_TICKER_NAME = "FB"
 DURATION_DAYS_FIELD_NAME = "days"
 PERCENT_CHANGE_FIELD_NAME = "percent_change"
 
-DEBUG = False
+DEBUG = True
 
 
 class Option(object):
@@ -91,16 +91,16 @@ class Option(object):
     def __str__(self):
         return "Option for target_price: {}, for date: {}".format(self.target_price, self.target_date)
 
+
 class BasicTradingStrategy(object):
     
     def __init__(self):
         self.portfolio = []
      
-    def new_day(self, date, price, avilable_options):
-        for option_data in avilable_options:
+    def new_day(self, date, price, available_options):
+        for option_data in available_options:
             option_price, option = option_data
             self._decide_if_to_buy(date, price, option_price, option.target_price)
-     
     
     def _buy(self, date, option_price, target_price):
         set_current_portfolio_price(get_current_portfolio_price() - option_price)
@@ -121,12 +121,24 @@ class BasicTradingStrategy(object):
         return response.json()
     
     def _decide_if_to_buy(self, date, current_price, option_price, option_target_price):
+        print("deciding if to buy option with price: {}, option_target_price: {}. And current FB price is: {}".format(
+            str(option_price), str(option_target_price), str(current_price)))
         break_even_price = option_price + option_target_price
+        print("break_even_price: {}".format(str(break_even_price)))
         expected_profit_price = EXPECTED_MIN_PROFIT_LEVEL * break_even_price
-        price_percent_delta = (expected_profit_price / current_price) * 100 - 100 
+        print("expected_profit_price: {}".format(str(expected_profit_price)))
+        price_percent_delta = (expected_profit_price / current_price) * 100 - 100
+        print("price_percent_delta: {}".format(str(price_percent_delta)))
         probability = self._probability(TIME_HORIZON_IN_DAYS, price_percent_delta)
+        # Looks like there is a bug in our logic
+        probability = probability / 100
+        print("probability: {}".format(str(probability)))
         if probability > LIKELIHOOD_THRESHOLD_TO_SELL:
+            print("looks like nice option since probability {} is higher than a threshold: {}".format(
+                str(probability), str(LIKELIHOOD_THRESHOLD_TO_SELL)))
             if get_current_portfolio_price() > option_price:
+                print("looks like we have money to buy, our current buying power: {}".format(
+                    str(get_current_portfolio_price())))
                 self._buy(date, option_price, option_target_price)
      
     def _sell(self, i, price):
@@ -204,7 +216,7 @@ def main():
     # Price is just one price for that day of stock
     price = si.get_live_price(FACEBOOK_TICKER_NAME)
     trading_strategy.new_day(date, price, get_options())
-    print("new budget: {}".format(trading_strategy.budget + trading_strategy.calculate_portfolio_price(price)))
+    print("new budget: {}".format(get_current_portfolio_price() + trading_strategy.calculate_portfolio_price(price)))
 
 
 def trade(context, input_obj):
@@ -230,20 +242,14 @@ def get_options():
     print("Dates that exist for the ticket and your time horizon: {}".format(str(dates)))
     options = []
 
-    for experation_date in dates:
-        call_fb_options, _ = fb.option_chain(str(experation_date))
-        print(call_fb_options)
+    for expiration_date in dates:
+        print("checking options for expiration date: {}".format(str(expiration_date)))
+        call_fb_options, _ = fb.option_chain(str(expiration_date))
         for option in call_fb_options.iterrows():
             _, option = option
-            # print("********")
-            # print(option)
-            # print(type(option))
-            # for i in option:
-            #     print("******** ########")
-            #     print(i)
-            #     print(type(i))
             option_price = option["lastPrice"]
-            options.append((option_price, Option(option["strike"], experation_date, option_price)))
+            print("price found: {}".format(str(option_price)))
+            options.append((option_price, Option(option["strike"], expiration_date, option_price)))
     return options
 
 
