@@ -41,6 +41,13 @@ def set_current_portfolio_price(price):
         }
     })
 
+# Store list of option to database
+def store_portfolio_to_db(portfolio):
+    # serialized the portfolio
+    serialized_portfolio = []
+    for i in range(len(portfolio)):
+        serialized_portfolio.append(dict(portfolio[i]))
+    portfolios_collection.insert(serialized_portfolio)     
 
 initiate_portfolio()
 
@@ -87,6 +94,11 @@ class Option(object):
         self.target_price = target_price
         self.target_date = target_date
         self.original_price = original_price
+
+    def __iter__(self):
+       yield 'target_price', self.target_price
+       yield 'target_date', self.target_date 
+       yield 'original_price', self.original_price
      
     def __str__(self):
         return "Option for target_price: {}, for date: {}".format(self.target_price, self.target_date)
@@ -95,6 +107,7 @@ class Option(object):
 class BasicTradingStrategy(object):
     
     def __init__(self):
+        # TODO: Retrieve this from db or instantiate with emtpy list
         self.portfolio = []
      
     def new_day(self, date, price, available_options):
@@ -218,6 +231,7 @@ def main():
     price = si.get_live_price(FACEBOOK_TICKER_NAME)
     trading_strategy.new_day(date, price, get_options())
     print("new budget: {}".format(get_current_portfolio_price() + trading_strategy.calculate_portfolio_price(price)))
+    store_portfolio_to_db(self.portfolio)
 
 
 def trade(context, input_obj):
