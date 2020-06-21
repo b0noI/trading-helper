@@ -121,6 +121,7 @@ class BasicTradingStrategy(object):
         return response.json()
     
     def _decide_if_to_buy(self, date, current_price, option_price, option_target_price):
+        print("target date: {}".format(str(date)))
         print("deciding if to buy option with price: {}, option_target_price: {}. And current FB price is: {}".format(
             str(option_price), str(option_target_price), str(current_price)))
         break_even_price = option_price + option_target_price
@@ -246,6 +247,7 @@ def get_options():
         print("checking options for expiration date: {}".format(str(expiration_date)))
         call_fb_options, _ = fb.option_chain(str(expiration_date))
         for option in call_fb_options.iterrows():
+            # print("option: {}".format(str(option)))
             _, option = option
             option_price = option["lastPrice"]
             print("price found: {}".format(str(option_price)))
