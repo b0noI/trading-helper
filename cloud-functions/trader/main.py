@@ -167,13 +167,15 @@ class BasicTradingStrategy(object):
         profit = (expected_profit_price - current_price) * probability
         print("profit value: {}, need to pay: {}".format(profit, option_price))
         print("probability: {}".format(str(probability)))
-        if probability > LIKELIHOOD_THRESHOLD_TO_SELL:
-            print("looks like nice option since probability {} is higher than a threshold: {}".format(
-                str(probability), str(LIKELIHOOD_THRESHOLD_TO_SELL)))
-            if get_current_portfolio_price() > option_price:
-                print("looks like we have money to buy, our current buying power: {}".format(
-                    str(get_current_portfolio_price())))
-                self._buy(date, option_price, option_target_price)
+        if profit > option_price:
+            print("looks like nice idea to buy")
+            if probability > LIKELIHOOD_THRESHOLD_TO_SELL:
+                print("looks like nice option since probability {} is higher than a threshold: {}".format(
+                    str(probability), str(LIKELIHOOD_THRESHOLD_TO_SELL)))
+                if get_current_portfolio_price() > option_price:
+                    print("looks like we have money to buy, our current buying power: {}".format(
+                        str(get_current_portfolio_price())))
+                    self._buy(date, option_price, option_target_price)
      
     def _sell(self, i, price):
         option = self.portfolio[i]
