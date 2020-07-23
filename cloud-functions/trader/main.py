@@ -100,6 +100,7 @@ class BasicTradingStrategy(object):
     def new_day(self, date, price, available_options):
         for option_data in available_options:
             option_price, option = option_data
+            print("target_date: {}".format(option.target_date))
             self._decide_if_to_buy(date, price, option_price, option.target_price)
     
     def _buy(self, date, option_price, target_price):
@@ -133,6 +134,9 @@ class BasicTradingStrategy(object):
         probability = self._probability(TIME_HORIZON_IN_DAYS, price_percent_delta)
         # Looks like there is a bug in our logic
         probability = probability / 100
+
+        profit = (expected_profit_price - current_price) * probability
+        print("profit value: {}, need to pay: {}".format(profit, option_price))
         print("probability: {}".format(str(probability)))
         if probability > LIKELIHOOD_THRESHOLD_TO_SELL:
             print("looks like nice option since probability {} is higher than a threshold: {}".format(
