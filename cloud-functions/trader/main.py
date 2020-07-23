@@ -15,25 +15,26 @@ mongo_psw = secret_response.payload.data.decode('UTF-8')
 
 client = MongoClient("mongodb+srv://trader:{}@ahmed-3jokf.gcp.mongodb.net/test?retryWrites=true&w=majority".format(mongo_psw))
 
-portfolios_collection = client.portfolio.portfolios
+portfolios_collection = client.portfolio
 
 
-def initiate_portfolio():
-    portfolio_count = portfolios_collection.find({"name": constants.PORTFOLIO_NAME}).count()
+def initiate_budget_amount():
+    portfolio_count = portfolios_collection.portfolios.find({"name": constants.PORTFOLIO_NAME}).count()
     if portfolio_count == 1:
         return
     elif portfolio_count > 1:
         raise ValueError("there are more than one portfolio with this name")
 
-    portfolios_collection.insert_one({"name": constants.PORTFOLIO_NAME, constants.CURRENT_BUDGET_FIELD_NAME: 5000})
+    portfolios_collection.portfolios.insert_one({"name": constants.PORTFOLIO_NAME, constants.CURRENT_BUDGET_FIELD_NAME: 5000})
 
 
+# Return total cash you have available for trading. 
 def get_current_portfolio_price():
-    return portfolios_collection.find_one({"name": constants.PORTFOLIO_NAME})[constants.CURRENT_BUDGET_FIELD_NAME]
+    return portfolios_collection.portfolios.find_one({"name": constants.PORTFOLIO_NAME})[constants.CURRENT_BUDGET_FIELD_NAME]
 
 
 def set_current_portfolio_price(price):
-    portfolios_collection.update_one({
+    portfolios_collection.portfolios.update_one({
         "name": constants.PORTFOLIO_NAME
     }, {
         "$set": {
@@ -41,8 +42,30 @@ def set_current_portfolio_price(price):
         }
     })
 
+# If we have bought any options before, lets restore them from DB 
+def get_list_of_bought_options():
+    portfolio = []    
+    for item in portfolios_collection.lastportfolio.find():
+        item.pop('_id') # Hack to remove mongoDB part 
+        # Convert item dict to Option object 
+        opt = Option(item['target_price'], item['target_date'], item['original_price'])      
+        portfolio.append(opt) 
+    return portfolio
 
-initiate_portfolio()
+# Store list of bought options to database
+def store_list_of_bought_options(portfolio):
+    # Check if we have something in DB if so delete them please 
+    bought_portfolio_count = portfolios_collection.lastportfolio.count()
+    if bought_portfolio_count != 0:
+    	portfolios_collection.lastportfolio.remove()
+
+    # serialized the portfolio and store to the db
+    serialized_portfolio = []
+    for i in range(len(portfolio)):
+        serialized_portfolio.append(dict(portfolio[i]))
+    portfolios_collection.lastportfolio.insert(serialized_portfolio)     
+
+initiate_budget_amount()
 
 # Insert new row to DB
 def insert_new_price(history_price, current_price):
@@ -87,6 +110,11 @@ class Option(object):
         self.target_price = target_price
         self.target_date = target_date
         self.original_price = original_price
+
+    def __iter__(self):
+       yield 'target_price', self.target_price
+       yield 'target_date', self.target_date 
+       yield 'original_price', self.original_price
      
     def __str__(self):
         return "Option for target_price: {}, for date: {}".format(self.target_price, self.target_date)
@@ -95,6 +123,7 @@ class Option(object):
 class BasicTradingStrategy(object):
     
     def __init__(self):
+        # TODO: Retrieve this from db or instantiate with emtpy list
         self.portfolio = []
      
     def new_day(self, date, price, available_options):
@@ -148,11 +177,10 @@ class BasicTradingStrategy(object):
      
     def _sell(self, i, price):
         option = self.portfolio[i]
-        # TODO
         current_option_price = self._calculate_option_price(option, price)
         set_current_portfolio_price(get_current_portfolio_price() + current_option_price)
         del self.portfolio[i]
-     
+    
     def _calculate_option_price(self, option, price):
         delta = (option.target_price + option.original_price) - price
         if delta > 0:
@@ -218,10 +246,13 @@ def main():
     # Specify the budget 
     trading_strategy = BasicTradingStrategy()
     date = datetime.today()
+    # populate the last bought options to the list
+    trading_strategy.portfolio = get_list_of_bought_options()
     # Price is just one price for that day of stock
     price = si.get_live_price(FACEBOOK_TICKER_NAME)
     trading_strategy.new_day(date, price, get_options())
     print("new budget: {}".format(get_current_portfolio_price() + trading_strategy.calculate_portfolio_price(price)))
+    store_list_of_bought_options(trading_strategy.portfolio)
 
 
 def trade(context, input_obj):
